@@ -21,6 +21,7 @@ const GIF_HEIGHT = 256;
 const GIF_SCALE = 1;
 const CRT_DEFAULTS = {
   enabled: true,
+  smoothing: true,
   showShapes: false,
   scanlineIntensity: 0.5,
   scanlineCount: 256,
@@ -85,10 +86,9 @@ const uniforms = getUniformLocations(gl, program, [
 
 const texture = gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D, texture);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+applySmoothing(state.params.smoothing);
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, sceneCanvas.width, sceneCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
 setupPane();
@@ -234,6 +234,7 @@ function resize() {
   sceneCanvas.height = height;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, sceneCanvas.width, sceneCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  applySmoothing(state.params.smoothing);
 }
 
 function setupPane() {
@@ -244,10 +245,14 @@ function setupPane() {
 
   const params = state.params;
 
-  pane.addBinding(params, 'showShapes', { label: 'Shapes' });
   pane.addBinding(params, 'enabled', { label: 'Enabled' }).on('change', ev => {
     state.params.enabled = ev.value;
   });
+  pane.addBinding(params, 'smoothing', { label: 'Smoothing' }).on('change', ev => {
+    state.params.smoothing = ev.value;
+    applySmoothing(ev.value);
+  });
+  pane.addBinding(params, 'showShapes', { label: 'Shapes' });
 
   const scanlines = pane.addFolder({ title: 'Scanlines', expanded: true });
   scanlines.addBinding(params, 'scanlineIntensity', { min: 0, max: 1, step: 0.01, label: 'Intensity' });
@@ -271,6 +276,7 @@ function setupPane() {
 
   pane.addButton({ title: 'Reset to defaults' }).on('click', () => {
     Object.assign(params, CRT_DEFAULTS);
+    applySmoothing(params.smoothing);
     pane.refresh();
   });
 }
@@ -378,4 +384,12 @@ function getUniformLocations(glContext, programHandle, names) {
     map[names[i]] = glContext.getUniformLocation(programHandle, names[i]);
   }
   return map;
+}
+
+function applySmoothing(enabled) {
+  sceneCtx.imageSmoothingEnabled = enabled;
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  const filter = enabled ? gl.LINEAR : gl.NEAREST;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
 }
