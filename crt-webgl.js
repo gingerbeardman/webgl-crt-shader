@@ -244,7 +244,7 @@ function setupPane() {
 
   const params = state.params;
 
-  pane.addBinding(params, 'showShapes', { label: 'Show shapes' });
+  pane.addBinding(params, 'showShapes', { label: 'Shapes' });
   pane.addBinding(params, 'enabled', { label: 'Enabled' }).on('change', ev => {
     state.params.enabled = ev.value;
   });
