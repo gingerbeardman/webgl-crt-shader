@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CRT Shader – Raw WebGL2</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% 20%, #0b1222, #04070f 55%);
+      font-family: 'Space Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+      color: #e2e8f0;
+      overflow: hidden;
+    }
+    #root {
+      position: fixed;
+      inset: 0;
+    }
+    #crt-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #legend {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      padding: 10px 12px;
+      background: rgba(6, 9, 18, 0.72);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 10px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      pointer-events: none;
+      line-height: 1.35;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    #legend strong {
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    #legend span {
+      display: block;
+      margin-top: 6px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <canvas id="crt-canvas"></canvas>
+  </div>
+  <div id="legend">
+    <strong>CRT Shader (WebGL2)</strong>
+    <span>GIF + shapes are composited on a 2D canvas, then go through the CRT shader pass.</span>
+  </div>
+  <script type="module" src="./crt-webgl.js"></script>
+</body>
+</html>
