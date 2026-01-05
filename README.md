@@ -4,7 +4,7 @@ Tweakable CRT shader for web canvas, three.js, etc.
 
 If you use this in your game/app/website I'd love to hear about it.
 
-### About
+## About
 
 This is a WebGL GLSL shader intended for use in web browsers.
 
