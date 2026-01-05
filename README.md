@@ -16,6 +16,10 @@ If you use this in your game/app/website I'd love to hear about it.
 - you want to try to match the number of lines to the output resolution (here, 256)
 - optimised to run well on as far back as iPhone XS (2018, A12 Bionic CPU w/ 4-core GPU)
 
+## Announcement blog post
+
+- [blog.gingerbeardman.com/2026/01/04/glsl-web-crt-shader/](https://blog.gingerbeardman.com/2026/01/04/glsl-web-crt-shader/)
+
 ## Screenshot
 
 ![Default parameters](/screenshot.png)
