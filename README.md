@@ -1,4 +1,4 @@
-# GLSL Web CRT Shader
+# WebGL CRT Shader
 
 Tweakable CRT shader for web canvas, three.js, etc.
 
