@@ -1,6 +1,6 @@
 # GLSL Web CRT Shader
 
-Tweakable CRT shader for the web/canvas/three.js/etc
+Tweakable CRT shader for the canvas, three.js, etc.
 
 If you use this in your game/app/website I'd love to know.
 
