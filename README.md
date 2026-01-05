@@ -15,7 +15,7 @@ This is a WebGL shader, written in GLSL, intended for use in web browsers.
 
 ## Try it
 
-[LIVE DEMO](https://gingerbeardman.github.io/glsl-web-crt-shader/)
+[LIVE DEMO](https://gingerbeardman.github.io/webgl-crt-shader/)
 
 😎
 
