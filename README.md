@@ -2,6 +2,8 @@
 
 Tweakable CRT shader for the web/canvas/three.js/etc
 
+If you use this in your game/app/website I'd love to know.
+
 ## Try it
 
 [LIVE DEMO](https://gingerbeardman.github.io/glsl-web-crt-shader/)
