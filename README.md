@@ -4,6 +4,8 @@ Tweakable CRT shader for web canvas, three.js, etc.
 
 If you use this in your game/app/website I'd love to hear about it.
 
+Let's call this _Serenity Shader_ if we need a name to refer to it as.
+
 ## About
 
 This is a WebGL shader, written in GLSL, intended for use in web browsers.
@@ -23,7 +25,7 @@ This is a WebGL shader, written in GLSL, intended for use in web browsers.
 
 - in this example the source image is scaled with interpolation (smoothing) to add to the vibe
 - you want to try to match the number of lines to the output resolution (here, 256)
-- optimised to run well on as far back as iPhone XS (2018, A12 Bionic CPU w/ 4-core GPU)
+- optimised to run well on as far back as _iPhone XS_ (2018, A12 Bionic CPU w/ 4-core GPU)
 
 ## Announcement blog post
 
@@ -31,7 +33,7 @@ This is a WebGL shader, written in GLSL, intended for use in web browsers.
 
 ## Screenshot
 
-![Default parameters](/screenshot.png)
+[![Default parameters](/screenshot.png)](https://gingerbeardman.github.io/webgl-crt-shader/)
 
 ## Licence
 
