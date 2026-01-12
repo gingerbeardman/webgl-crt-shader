@@ -1,6 +1,5 @@
 // CRT Shader for Three.js
-// Converted from my LÖVE2D shader to standard GLSL for Web
-// 2025, by Matt Sephton @gingerbeardman
+// Converted from LÖVE2D shader to standard GLSL
 
 export const CRTShader = {
   uniforms: {
@@ -31,6 +30,12 @@ export const CRTShader = {
   `,
 
   fragmentShader: /* glsl */ `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+    #else
+      precision mediump float;
+    #endif
+
     uniform sampler2D tDiffuse;
     uniform float scanlineIntensity;
     uniform float scanlineCount;
@@ -49,6 +54,14 @@ export const CRTShader = {
 
     varying vec2 vUv;
 
+    // Precomputed constants
+    const float PI = 3.14159265;
+    const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+    const float BLOOM_THRESHOLD_FACTOR = 0.5;
+    const float BLOOM_FACTOR_MULT = 1.5;
+    const float RGB_SHIFT_SCALE = 0.005;
+    const float RGB_SHIFT_INTENSITY = 0.08;
+
     // Optimized curvature function
     vec2 curveRemapUV(vec2 uv, float curvature) {
       vec2 coords = uv * 2.0 - 1.0;
@@ -58,13 +71,10 @@ export const CRTShader = {
       return coords * 0.5 + 0.5;
     }
 
-    // Optimized bloom sampling (2x2 instead of 3x3)
+    // Optimized bloom sampling (single sample with larger radius)
     vec4 sampleBloom(sampler2D tex, vec2 uv, float radius) {
-      vec4 bloom = texture2D(tex, uv) * 0.4;
-      bloom += texture2D(tex, uv + vec2(radius, 0.0)) * 0.2;
-      bloom += texture2D(tex, uv + vec2(-radius, 0.0)) * 0.2;
-      bloom += texture2D(tex, uv + vec2(0.0, radius)) * 0.2;
-      return bloom;
+      // Single sample at larger offset for performance
+      return texture2D(tex, uv) * 0.6 + texture2D(tex, uv + vec2(radius * 1.5)) * 0.4;
     }
 
     // Approximates vignette using Chebyshev distance squared instead of pow()
@@ -77,8 +87,8 @@ export const CRTShader = {
     void main() {
       vec2 uv = vUv;
 
-      // Apply screen curvature if enabled
-      if (curvature > 0.0) {
+      // Apply screen curvature if enabled (early out for out-of-bounds)
+      if (curvature > 0.001) {
         uv = curveRemapUV(uv, curvature);
         if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
           gl_FragColor = vec4(0.0);
@@ -89,61 +99,65 @@ export const CRTShader = {
       // Get the original pixel color
       vec4 pixel = texture2D(tDiffuse, uv);
 
-      // Apply bloom effect with threshold-based sampling
-      if (bloomIntensity > 0.0) {
-        float pixelLum = dot(pixel.rgb, vec3(0.299, 0.587, 0.114));
+      // Apply bloom effect with threshold-based sampling (skip if disabled)
+      if (bloomIntensity > 0.001) {
+        float pixelLum = dot(pixel.rgb, LUMA);
         // Only sample bloom if pixel is above threshold
-        if (pixelLum > bloomThreshold * 0.5) {
+        float bloomThresholdHalf = bloomThreshold * BLOOM_THRESHOLD_FACTOR;
+        if (pixelLum > bloomThresholdHalf) {
           vec4 bloomSample = sampleBloom(tDiffuse, uv, 0.005);
           bloomSample.rgb *= brightness;
-          float bloomLum = dot(bloomSample.rgb, vec3(0.299, 0.587, 0.114));
-          float bloomFactor = bloomIntensity * max(0.0, (bloomLum - bloomThreshold) * 1.5);
+          float bloomLum = dot(bloomSample.rgb, LUMA);
+          float bloomFactor = bloomIntensity * max(0.0, (bloomLum - bloomThreshold) * BLOOM_FACTOR_MULT);
           pixel.rgb += bloomSample.rgb * bloomFactor;
         }
       }
 
-      // Apply RGB shift only if needed
-      if (rgbShift > 0.001) {
-        float shift = rgbShift * 0.005; // Reduced offset
-        pixel.r += texture2D(tDiffuse, vec2(uv.x + shift, uv.y)).r * 0.08;
-        pixel.b += texture2D(tDiffuse, vec2(uv.x - shift, uv.y)).b * 0.08;
+      // Apply RGB shift only if significant (skip for minimal values)
+      if (rgbShift > 0.005) {
+        float shift = rgbShift * RGB_SHIFT_SCALE;
+        pixel.r += texture2D(tDiffuse, vec2(uv.x + shift, uv.y)).r * RGB_SHIFT_INTENSITY;
+        pixel.b += texture2D(tDiffuse, vec2(uv.x - shift, uv.y)).b * RGB_SHIFT_INTENSITY;
       }
 
       // Apply brightness
       pixel.rgb *= brightness;
 
-      // Apply contrast
+      // Apply contrast and saturation in one pass
+      float luminance = dot(pixel.rgb, LUMA);
       pixel.rgb = (pixel.rgb - 0.5) * contrast + 0.5;
-
-      // Apply saturation adjustment
-      float luminance = dot(pixel.rgb, vec3(0.299, 0.587, 0.114));
       pixel.rgb = mix(vec3(luminance), pixel.rgb, saturation);
 
-      // Calculate scanlines with caching
-      float scanline = 1.0;
-      if (scanlineIntensity > 0.0) {
+      // Calculate combined lighting mask (scanlines, flicker, vignette)
+      float lightingMask = 1.0;
+
+      // Calculate scanlines (skip if disabled)
+      if (scanlineIntensity > 0.001) {
         float scanlineY = (uv.y + yOffset) * scanlineCount;
-        // Use built-in sin directly without pi constant
-        float scanlinePattern = abs(sin(scanlineY * 3.14159265));
+        float scanlinePattern = abs(sin(scanlineY * PI));
+
+        // Apply adaptive intensity if enabled
         float adaptiveFactor = 1.0;
         if (adaptiveIntensity > 0.001) {
           float yPattern = sin(uv.y * 30.0) * 0.5 + 0.5;
           adaptiveFactor = 1.0 - yPattern * adaptiveIntensity * 0.2;
         }
-        scanline = 1.0 - scanlinePattern * scanlineIntensity * adaptiveFactor;
+
+        lightingMask *= 1.0 - scanlinePattern * scanlineIntensity * adaptiveFactor;
       }
 
       // Apply flicker effect
-      float flicker = 1.0 + sin(time * 110.0) * flickerStrength;
-
-      // Apply optimized vignette
-      float vignette = 1.0;
-      if (vignetteStrength > 0.0) {
-        vignette = vignetteApprox(uv, vignetteStrength);
+      if (flickerStrength > 0.001) {
+        lightingMask *= 1.0 + sin(time * 110.0) * flickerStrength;
       }
 
-      // Apply combined lighting effects
-      pixel.rgb *= scanline * flicker * vignette;
+      // Apply vignette (skip if disabled)
+      if (vignetteStrength > 0.001) {
+        lightingMask *= vignetteApprox(uv, vignetteStrength);
+      }
+
+      // Apply combined lighting effects in single multiplication
+      pixel.rgb *= lightingMask;
 
       gl_FragColor = pixel;
     }
